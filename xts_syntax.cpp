@@ -269,7 +269,7 @@ DBUG("tokenize .23");
                     tlen++;
                 }
 
-                // TODO : store int or float value
+                // HERE : store int or float value
                 // in Token char array
 
                 if ( result.type == TK_INT ) {
@@ -357,7 +357,25 @@ DBUG("tokenize .23");
                                         result.token[slen] = 0x00;
                                     }
                                     tlen = slen;
-                                }
+                                } else {
+									// it's an unknown identifier
+									// may be a variable name ...
+									
+									slen = strlen(identifier);
+									
+									printf("found an unknown identifier >%s< (%c) \n", identifier, *(expr+slen) );
+									
+									// tmp code : have to specify varType
+									result.type = TK_NUMVAR;
+                                    result.idx = 0;
+                                    result.len = slen;
+                                    
+                                    memcpy(result.token, identifier, max(slen, MAX_TOKEN_REPR_SIZE) );
+                                    if ( slen < MAX_TOKEN_REPR_SIZE ) {
+                                        result.token[slen] = 0x00;
+                                    }
+                                    tlen = slen;
+								}	
                             }
                         }
                     }

@@ -96,6 +96,7 @@ DBUG( getScratchPad() );
 
   // STILL to STORE                                123456789012
   // vars / arrays (xlexem.token = "abc", "abc$", "abcdfg[999]\0")
+  // prefix : lexems_identifiers[]
 
   // STILL to code
   // bloc addr jump : if/else , while/break/continue
@@ -116,6 +117,11 @@ DBUG( getScratchPad() );
   DBUG( "/////////////" );
   // chanel descriptor
   expr = (char*)"#13";
+  tokenizeExpr(expr);
+  
+  // cmd & vars literals
+  // BEWARE : "abc$" is a single token
+  expr = (char*)"abs abc abc$ abc$[a+1]";
   tokenizeExpr(expr);
 
   // TU_testReadInt();
