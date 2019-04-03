@@ -121,7 +121,7 @@ DBUG( getScratchPad() );
   
   // cmd & vars literals
   // BEWARE : "abc$" is a single token
-  expr = (char*)"abs abc abc$ abc$[a+1]";
+  expr = (char*)"abs abc abc$ abc$[abc$@+1]";
   tokenizeExpr(expr);
 
   // TU_testReadInt();

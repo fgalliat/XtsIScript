@@ -363,6 +363,12 @@ DBUG("tokenize .23");
 									
 									slen = strlen(identifier);
 									
+									if ( slen < 1 ) {
+										result.type = TK_UNDEF;
+										return result; // BEWARE w/ that eject code
+									}
+									
+									char lastChar = *(expr+slen-1);
 									char nextChar = *(expr+slen);
 									
 									if ( nextChar == '[' ) {
@@ -376,7 +382,7 @@ DBUG("tokenize .23");
 									printf("found an unknown identifier >%s< (%c) \n", identifier, nextChar );
 									
 									// tmp code : have to specify varType
-									result.type = TK_NUMVAR;
+									result.type = lastChar == '$' ? TK_STRVAR : TK_NUMVAR;
                                     result.idx = 0;
                                     result.len = slen;
                                     
