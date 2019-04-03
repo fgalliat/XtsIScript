@@ -363,7 +363,17 @@ DBUG("tokenize .23");
 									
 									slen = strlen(identifier);
 									
-									printf("found an unknown identifier >%s< (%c) \n", identifier, *(expr+slen) );
+									char nextChar = *(expr+slen);
+									
+									if ( nextChar == '[' ) {
+										// array
+										printf("found an array cell identifier >%s< (%c) \n", identifier, nextChar );
+									} else if ( nextChar == '@' ) {
+										// array len
+										printf("found an array length identifier >%s< (%c) \n", identifier, nextChar );
+									}
+									
+									printf("found an unknown identifier >%s< (%c) \n", identifier, nextChar );
 									
 									// tmp code : have to specify varType
 									result.type = TK_NUMVAR;
