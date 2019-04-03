@@ -190,7 +190,7 @@ DBUG("tokenize .23");
                 DBUG("tokenize .10");
 
                 // IS a String
-                if ( lexems_onechar[idx] == '"' ) {
+                if ( idx == CO_DBLQUOTE ) {
                     int slen = readString( expr );
                     if ( slen < 0 ) {
                         DBUG_LOCKED = false;
@@ -214,6 +214,27 @@ DBUG("tokenize .23");
                     result.idx = findInScrathPadRegister(_str);
 
                     tlen = 1+slen+1;
+                } else if ( idx == CO_SHARP ) {
+                    // #26 -> Chanel descriptor [0..255]
+                    int nlen = 0;
+                    int nval = readInteger( expr+1, nlen );
+                    if ( nlen < 0 || nval < 0 || nval > 255 ) {
+                        DBUG_LOCKED = false;
+                        DBUG("Wrong chanel descriptor");
+                        result.type = TK_UNDEF;
+                        return result;
+                    }
+                    result.type = TK_CHANEL;
+                    result.len = nlen;
+                    // not necessary ....
+                    memcpy(result.token, (expr+1), max(nlen, MAX_TOKEN_REPR_SIZE) );
+                    if ( nlen < MAX_TOKEN_REPR_SIZE ) {
+                        result.token[nlen] = 0x00;
+                    }
+                    // ....
+                    result.idx = nval;
+
+                    tlen = 1 + nlen;
                 } else {
                     result.type = TK_ONE_CHAR;
                     result.idx = idx;

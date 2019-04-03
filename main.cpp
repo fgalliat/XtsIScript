@@ -3,10 +3,15 @@
 #include "xts_io.h"
 #include "xts_memseg.h"
 
-
-
 // =====================================
 
+// Unit Tests
+void TU_testReadInt();
+
+// Routines
+void tokenizeExpr(char* expr);
+
+// =====================================
 
 int main(int argc, char** argv) {
 
@@ -54,7 +59,11 @@ DBUG( getScratchPad() );
   // DONE
   // parse ints & floats (use 4 bytes of xlexem.token)
   // @ tokenize() => distinguish NUM (int) & FLT (float)
-  // 
+  // TEST code : readInteger() => done
+  // CHANEL LITERAL parsing ( ex. #13 )
+  //  #1 is a chanel descriptor (because pins can be simple int parameter in some function)
+  //  -> chanels can be files, I2C, Serial, ........
+  //  -> max 256 chanels -> (3 digit but 1 byte)
 
   // TASKS
   // finish tokenization (w/ var, pin, ?chanel? literals)
@@ -66,7 +75,7 @@ DBUG( getScratchPad() );
 
   // STILL to PARSE
   // num vars / str vars literals
-  // arrays / pins literals
+  // arrays
   // 
   // LITERAL RULES
   // -> var names are 6 chars max (w/o decorators)
@@ -78,12 +87,9 @@ DBUG( getScratchPad() );
 
   // ?? keeps "abc", "abc$", "abc[", "abc@" ?? as token representation ?? 
 
-  // #1 is a chanel descriptor (because pins can be simple int parameter in some function)
-  //  -> chanels can be files, I2C, Serial, ........
-  //  -> max 256 chanels -> (3 digit but 1 byte)
-  // all used spe chars are referenced in lexems_onechar[]
+  // In Progress : 
 
-  // TEST code : readInteger()
+
 
 
   // functions
@@ -105,54 +111,14 @@ DBUG( getScratchPad() );
   // fct MUST have lparent before args
 
   char* expr = (char*)">=   abs(123.56); if (true) { print(\"coucou les gens, ca va ?\"); } ";
-  xlexem lex;
-  int cpt = 0;
+  tokenizeExpr(expr);
 
-  cleanLex();
-  bool hadErrror = false;
+  DBUG( "/////////////" );
+  // chanel descriptor
+  expr = (char*)"#13";
+  tokenizeExpr(expr);
 
-  while( ( lex = tokenize(expr) ).type != TK_EOF ) {
-
-    if ( lex.type == TK_UNDEF ) {
-      DBUG("Parsing error");
-      DBUG(lex);
-
-      hadErrror = true;
-      break;
-    }
-
-    if ( lex.type != TK_WHITESPACE ) {
-      DBUG(lex);
-
-      pushLex( lex );
-      cpt++;
-    } else {
-      // DBUG("-whitespace-");
-    }
-
-  }
-  DBUG_LOCKED = false;
-
-  if ( lex.type == TK_UNDEF ) {
-    DBUG("There was an error during tokenization.");
-  } else {
-    cpt++; // Cf EOF
-
-    char msg[64];
-    sprintf(msg, "tokenization succeeded with %d tokens (%d bytes)", cpt, ( (int)(cpt*sizeof(xlexem)) ) );
-    printf("%s\n", msg);
-  }
-
-  DBUG( "=============================" ); 
-
-  const char* subExpr = "0234";
-  int intLen = 0;
-  int intValue = 0;
-
-  intValue = readInteger((char*)subExpr, intLen);
-  char msg[64];
-  sprintf(msg, "test readInteger(%s) => %d (len %d)", subExpr, intValue, intLen );
-  printf("%s\n", msg);
+  // TU_testReadInt();
 
   DBUG( "/////////////////////////////" ); 
 
@@ -162,7 +128,68 @@ DBUG( getScratchPad() );
   DBUG_MEM();
 
 
-
-
   return 0;
 }
+
+
+  void TU_testReadInt() {
+    DBUG( "=============================" ); 
+    const char* subExpr = "0234";
+    int intLen = 0;
+    int intValue = 0;
+
+    intValue = readInteger((char*)subExpr, intLen);
+    char msg[64];
+    sprintf(msg, "test readInteger(%s) => %d (len=%d)", subExpr, intValue, intLen );
+    printf("%s\n", msg);
+
+    if ( intValue != 234 ) {
+      printf("(!!) FAILED !\n");
+    } else {
+      printf("(ii) SUCCESS !\n");
+    }
+  }
+
+  void tokenizeExpr(char* expr) {
+    DBUG( "=============================" ); 
+    xlexem lex;
+    int cpt = 0;
+
+    cleanLex();
+    bool hadErrror = false;
+
+    while( ( lex = tokenize(expr) ).type != TK_EOF ) {
+
+      if ( lex.type == TK_UNDEF ) {
+        DBUG("Parsing error");
+        DBUG(lex);
+
+        hadErrror = true;
+        break;
+      }
+
+      if ( lex.type != TK_WHITESPACE ) {
+        DBUG(lex);
+
+        pushLex( lex );
+        cpt++;
+      } else {
+        // DBUG("-whitespace-");
+      }
+
+    }
+    DBUG_LOCKED = false;
+
+    if ( lex.type == TK_UNDEF ) {
+      DBUG("There was an error during tokenization.");
+    } else {
+      cpt++; // Cf EOF
+
+      char msg[64];
+      sprintf(msg, "tokenization succeeded with %d tokens (%d bytes)", cpt, ( (int)(cpt*sizeof(xlexem)) ) );
+      printf("%s\n", msg);
+    }
+  }
+
+  
+// -eof- 
