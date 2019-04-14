@@ -27,6 +27,17 @@
  void assignArray(char* name, int index, float value);
  void assignArray(char* name, int index, char* value);
  
+ num getInt(char* name);
+ float getFloat(char* name);
+ char* getString(char* name);
+
+ int getArrayLength(char* name);
+
+ num getIntFromArray(char* name, int index);
+ float getFloatFromArray(char* name, int index);
+ char* getStringFromArray(char* name, int index);
+
+ heapAddr defragHeap();
 
  #define HEAP_REG_ENTRY_SIZE 8
  #define HEAP_REG_ENTRY_NB 256
@@ -37,6 +48,6 @@
 
  void registerVar(char* name, heapAddr addr);
  heapAddr getVar(char* name);
-
+ bool markForGC(char* name);
 
 #endif
