@@ -25,5 +25,11 @@ XtsIScript
                               \  so max array length is 255
 
     dim ab$[255];
+    ac$ = "Coucou";
 
-    ac$ = "Coucou"; 
+    register = {
+        [ "ab$000", addr1, addr0 ], 64KB page addressable
+        6 long 0 padding / 8 bytes per entry
+    }
+
+
