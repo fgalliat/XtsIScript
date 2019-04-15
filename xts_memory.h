@@ -3,6 +3,9 @@
 
  #include "xts_typedef.h"
 
+
+ void setupMainMemory();
+
  #define MAIN_HEAP_SIZE 655356
  
  typedef uint16_t heapAddr;
@@ -39,7 +42,9 @@
 
  heapAddr defragHeap();
 
- #define HEAP_REG_ENTRY_SIZE 8
+ #define HEAP_REG_ENTRY_SIZE_name 6
+ #define HEAP_REG_ENTRY_SIZE_addr sizeof( heapAddr )
+ #define HEAP_REG_ENTRY_SIZE ( HEAP_REG_ENTRY_SIZE_name + HEAP_REG_ENTRY_SIZE_addr )
  #define HEAP_REG_ENTRY_NB 256
  #define HEAP_REG_SIZE ( HEAP_REG_ENTRY_SIZE * HEAP_REG_ENTRY_NB )
  uint8_t hregister[HEAP_REG_SIZE ]; // 2KB
@@ -48,6 +53,6 @@
 
  void registerVar(char* name, heapAddr addr);
  heapAddr getVar(char* name);
- bool markForGC(char* name);
+ bool markForGC(char* name); // see later
 
 #endif
