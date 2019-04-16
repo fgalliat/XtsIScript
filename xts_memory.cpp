@@ -23,6 +23,12 @@ void _initHRegister() {
     memset(hregister, 0x80, HEAP_REG_SIZE);
 }
 
+heapAddr getHeapUse() {
+    return heapCursor;
+}
+
+
+
 // -- heap reg ----
 
 bool binEq(char* s0, char* s1, int len) {
@@ -32,7 +38,7 @@ bool binEq(char* s0, char* s1, int len) {
     return true;
 }
 
-// Arrays index are 256 max
+// Arrays index are 255 max
 void composeVarName(char* name, int index, char* dest) {
    memset(dest, 0x00, HEAP_REG_ENTRY_SIZE_name_ext);
    strcpy(dest, name);
