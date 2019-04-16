@@ -15,6 +15,10 @@
  uint8_t heap[ MAIN_HEAP_SIZE ]; // 64KB
  void _initHeap(); // fill w/ 0x00
 
+ // in bytes
+ heapAddr getHeapUse();
+
+
  // Cf arduino
  typedef uint32_t num;
 
@@ -42,17 +46,19 @@
 
  heapAddr defragHeap();
 
- #define HEAP_REG_ENTRY_SIZE_name 6
+ #define HEAP_REG_ENTRY_SIZE_name_only 5
+ #define HEAP_REG_ENTRY_SIZE_name_aidx 1
+ #define HEAP_REG_ENTRY_SIZE_name_ext (HEAP_REG_ENTRY_SIZE_name_only + HEAP_REG_ENTRY_SIZE_name_aidx)
  #define HEAP_REG_ENTRY_SIZE_addr sizeof( heapAddr )
- #define HEAP_REG_ENTRY_SIZE ( HEAP_REG_ENTRY_SIZE_name + HEAP_REG_ENTRY_SIZE_addr )
+ #define HEAP_REG_ENTRY_SIZE ( HEAP_REG_ENTRY_SIZE_name_ext + HEAP_REG_ENTRY_SIZE_addr )
  #define HEAP_REG_ENTRY_NB 256
  #define HEAP_REG_SIZE ( HEAP_REG_ENTRY_SIZE * HEAP_REG_ENTRY_NB )
- uint8_t hregister[HEAP_REG_SIZE ]; // 2KB
+ uint8_t hregister[ HEAP_REG_SIZE ]; // 2KB
 
  void _initHRegister(); // fill w/ 0x80 (no space used char)
 
- void registerVar(char* name, heapAddr addr);
- heapAddr getVar(char* name);
- bool markForGC(char* name); // see later
+ void registerVar(char* name, int index = 0, heapAddr addr=HEAP_NOT_FOUND);
+ heapAddr getVar(char* name, int index=0);
+ bool markForGC(char* name, int index=0); // see later
 
 #endif

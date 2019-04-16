@@ -26,10 +26,12 @@ XtsIScript
 
     dim ab$[255];
     ac$ = "Coucou";
-
+ 
     register = {
-        [ "ab$000", addr1, addr0 ], 64KB page addressable
-        6 long 0 padding / 8 bytes per entry
+        [ "ab$00", arrayIndex, addr1, addr0 ], 64KB page addressable
+        5 long 0 padding / 1byte for array cell index / 8 bytes per entry
     }
+
+
 
 

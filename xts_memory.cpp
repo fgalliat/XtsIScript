@@ -25,9 +25,24 @@ void _initHRegister() {
 
 // -- heap reg ----
 
+bool binEq(char* s0, char* s1, int len) {
+    for(int z=0; z < len; z++) {
+        if ( s0[z] != s1[z] ) { return false; }
+    }
+    return true;
+}
+
+// Arrays index are 256 max
+void composeVarName(char* name, int index, char* dest) {
+   memset(dest, 0x00, HEAP_REG_ENTRY_SIZE_name_ext);
+   strcpy(dest, name);
+   dest[HEAP_REG_ENTRY_SIZE_name_ext - HEAP_REG_ENTRY_SIZE_name_aidx] = index % 256;
+}
+
+
 // BEWARE w/ array cells
 
-int findVar(char* name) {
+int findVar(char* name, int index=0) {
     for(int i=0; i < HEAP_REG_ENTRY_NB; i++) {
         int addr = i*HEAP_REG_ENTRY_SIZE;
         // reached end of used heap register
@@ -35,11 +50,13 @@ int findVar(char* name) {
             return -1;
         }
 
-        char entryName[ HEAP_REG_ENTRY_SIZE_name +1 ];
-        memset( entryName, 0x00, HEAP_REG_ENTRY_SIZE_name +1 );
-        memcpy( entryName, &(hregister[addr]), HEAP_REG_ENTRY_SIZE_name );
+        char entryName[ HEAP_REG_ENTRY_SIZE_name_ext ];
+        char reqName[ HEAP_REG_ENTRY_SIZE_name_ext ];
+        memset( entryName, 0x00, HEAP_REG_ENTRY_SIZE_name_ext );
+        memcpy( entryName, &(hregister[addr]), HEAP_REG_ENTRY_SIZE_name_ext );
+        composeVarName(name, index, reqName);
 
-        if ( strcmp(entryName, name) == 0 ) {
+        if ( binEq(entryName, reqName, HEAP_REG_ENTRY_SIZE_name_ext) ) {
             return i;
         }
 
@@ -66,30 +83,37 @@ heapAddr getVar(char* name) {
     }
 
     int addr = idx*HEAP_REG_ENTRY_SIZE;
-    uint8_t add1 = hregister[ addr + HEAP_REG_ENTRY_SIZE_name +0 ];
-    uint8_t add0 = hregister[ addr + HEAP_REG_ENTRY_SIZE_name +1 ];
+    uint8_t add1 = hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +0 ];
+    uint8_t add0 = hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +1 ];
 
     heapAddr found = ( add1 << 8 ) + add0;
     return found;
 }
 
-void registerVar(char* name, heapAddr vaddr) {
+void registerVar(char* name, int index, heapAddr vaddr) {
   int idx = findVar(name);
   bool found = idx >= 0;
+
+  if ( vaddr == HEAP_NOT_FOUND ) {
+      vaddr = getHeapUse();
+  }
+
   if ( found ) {
     //   reassignVarAddr
     int addr = idx*HEAP_REG_ENTRY_SIZE;
-    hregister[ addr + HEAP_REG_ENTRY_SIZE_name +0 ] = vaddr >> 8;
-    hregister[ addr + HEAP_REG_ENTRY_SIZE_name +1 ] = vaddr % 256;
+    hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +0 ] = vaddr >> 8;
+    hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +1 ] = vaddr % 256;
   } else {
     //   addEntry @ hregister end
     idx = getHRegisterUse();
     // BEWARE : w/ overflow detection !!!!
     int addr = idx*HEAP_REG_ENTRY_SIZE;
-    memset(hregister, 0x00, HEAP_REG_ENTRY_SIZE_name);
-    memcpy( &hregister[addr], name, max( strlen(name), HEAP_REG_ENTRY_SIZE_name ) );
-    hregister[ addr + HEAP_REG_ENTRY_SIZE_name +0 ] = vaddr >> 8;
-    hregister[ addr + HEAP_REG_ENTRY_SIZE_name +1 ] = vaddr % 256;
+    memset(hregister, 0x00, HEAP_REG_ENTRY_SIZE_name_ext);
+    char reqVar[ HEAP_REG_ENTRY_SIZE_name_ext ];
+    composeVarName(name, index, reqVar);
+    memcpy( &hregister[addr], reqVar, HEAP_REG_ENTRY_SIZE_name_ext );
+    hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +0 ] = vaddr >> 8;
+    hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +1 ] = vaddr % 256;
   }
 }
 
