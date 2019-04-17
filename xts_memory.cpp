@@ -156,7 +156,8 @@ heapAddr getNextVar(char* name, int index) {
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-void registerVar(char* name, int index, heapAddr vaddr) {
+// return the (new) var idx 
+int registerVar(char* name, int index, heapAddr vaddr) {
   int idx = findVar(name, index);
   bool found = idx >= 0;
 
@@ -180,6 +181,8 @@ void registerVar(char* name, int index, heapAddr vaddr) {
   }
   hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +0 ] = vaddr >> 8;
   hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +1 ] = vaddr % 256;
+
+  return idx;
 }
 
 // ============= Array Variables =======================
@@ -412,20 +415,29 @@ int dimArrayVar(char* name, int length) {
  }
 
  // returns assignResultCode
+ // TODO : CHECK THAT CODE
  int reassignString(char* name, int index, char* value) {
      int curVarIdx = findVar( name, index );
 
      heapAddr lastAddr = 0;
+     int rc = ASSIGN_NOERROR;
 
      if ( curVarIdx < 0 ) {
-         registerVar(name, index, lastAddr);
+         curVarIdx = registerVar(name, index, HEAP_NOT_FOUND);
+         rc = reassignString( curVarIdx, value, lastAddr );
+         if ( rc != ASSIGN_NOERROR ) { return rc; }
+         int subAddr = curVarIdx * HEAP_REG_ENTRY_SIZE;
+         hregister[ subAddr + HEAP_REG_ENTRY_SIZE_name_ext + 0 ] = (uint8_t)( lastAddr >> 8 );
+         hregister[ subAddr + HEAP_REG_ENTRY_SIZE_name_ext + 1 ] = (uint8_t)( lastAddr % 256 );
      } else {
-         reassignString( curVarIdx, value, lastAddr );
+         rc = reassignString( curVarIdx, value, lastAddr );
+         if ( rc != ASSIGN_NOERROR ) { return rc; }
          int subAddr = curVarIdx * HEAP_REG_ENTRY_SIZE;
          hregister[ subAddr + HEAP_REG_ENTRY_SIZE_name_ext + 0 ] = (uint8_t)( lastAddr >> 8 );
          hregister[ subAddr + HEAP_REG_ENTRY_SIZE_name_ext + 1 ] = (uint8_t)( lastAddr % 256 );
      }
 
+    return rc;
  }
 
 

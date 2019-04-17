@@ -72,7 +72,7 @@
  #define HEAP_REG_ENTRY_NB 256
  #define HEAP_REG_SIZE ( HEAP_REG_ENTRY_SIZE * HEAP_REG_ENTRY_NB )
 
- void registerVar(char* name, int index = 0, heapAddr addr=HEAP_NOT_FOUND);
+ int registerVar(char* name, int index = 0, heapAddr addr=HEAP_NOT_FOUND);
  heapAddr getVar(char* name, int index=0);
 
  // === GC Routines ==============
