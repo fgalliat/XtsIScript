@@ -30,7 +30,8 @@ uint8_t* getHeap(heapAddr addr) {
   return &heap[addr];
 }
 
-
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 void _initHeap() {
     memset( heap, 0x00, MAIN_HEAP_SIZE );
@@ -96,34 +97,6 @@ int findVar(char* name, int index=0) {
     return -1;
 }
 
-// forward symbol
-heapAddr getVar(int entryIndex);
-
-// returns an addr
-heapAddr getVar(char* name, int index) {
-    int idx = findVar(name, index);
-    if ( idx < 0 ) {
-        DBUG(" b. Not found variable in register");
-        return HEAP_NOT_FOUND;
-    }
-    return getVar( idx );
-}
-
-// returns an addr of addr just after >> name[index] <<
-heapAddr getNextVar(char* name, int index) {
-    int idx = findVar(name, index);
-    if ( idx < 0 ) {
-        DBUG(" b. Not found variable in register");
-        return HEAP_NOT_FOUND;
-    }
-    if ( idx >= HEAP_REG_ENTRY_NB ) {
-        DBUG(" b. No more variable in register");
-        return HEAP_NOT_FOUND;
-    }
-    return getVar( idx+1 );
-}
-
-
 // returns an addr
 heapAddr getVar(int entryIndex) {
     int idx = entryIndex;
@@ -136,6 +109,49 @@ heapAddr getVar(int entryIndex) {
     heapAddr found = ( add1 << 8 ) + add0;
     return found;
 }
+
+// returns an addr
+heapAddr getVar(char* name, int index) {
+    int idx = findVar(name, index);
+    if ( idx < 0 ) {
+        DBUG(" b. Not found variable in register");
+        return HEAP_NOT_FOUND;
+    }
+    return getVar( idx );
+}
+
+// returns a varEntryNum of addr just after >> name[index] <<
+int findNextVar(int entryIndex) {
+    int idx = entryIndex;
+    if ( idx < 0 ) {
+        DBUG(" b. Not found variable in register");
+        return -1;
+    }
+    if ( idx >= HEAP_REG_ENTRY_NB ) {
+        DBUG(" b. No more variable in register");
+        return -1;
+    }
+    return idx+1;
+}
+
+// returns a varEntryNum of addr just after >> name[index] <<
+int findNextVar(char* name, int index) {
+    int idx = findVar(name, index);
+    return findNextVar(idx);
+}
+
+// returns an addr of addr just after >> name[index] <<
+heapAddr getNextVar(char* name, int index) {
+    int idx = findNextVar(name, index);
+    if ( idx < 0 ) {
+        DBUG(" b. Not found variable in register");
+        return HEAP_NOT_FOUND;
+    }
+    return getVar( idx );
+}
+
+
+
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -189,67 +205,6 @@ int dimArrayVar(char* name, int length) {
 
     return assignVar(name, ARRAY_LENGTH_POSITION, length);
 }
-
-// ============= Serialize Values=======================
-
-    // int storeInt(uint8_t* ptr, number value) {
-    //   ptr[0] = (value >> 24) % 256;
-    //   ptr[1] = (value >> 16) % 256;
-    //   ptr[2] = (value >> 8) % 256;
-    //   ptr[3] = value % 256; // 256 : not 0xFF (255)   
-    //   return HEAP_ST_NUMBER_SIZE;
-    // }
-
-    // int storeDec(uint8_t* ptr, decimal value) {
-    //     memcpy( ptr, &value, HEAP_ST_DECIMAL_SIZE );
-    //     return HEAP_ST_DECIMAL_SIZE;
-    // }
-
-    // int storeStr(uint8_t* ptr, char* value, int len=-1, bool storeLastZero=true) {
-    //     if ( len < 0 ) { len = strlen(value); }
-    //     memcpy( ptr, value, len );
-    //     if (storeLastZero) { ptr[ len ] = 0x00; } 
-    //     return len;
-    // }
-
-    // // ========================
-
-    // decimal peekFloat(uint8_t* ptr) {
-    //     decimal result;
-    //     memcpy( &result, ptr, HEAP_ST_DECIMAL_SIZE );
-    //     return result;
-    // }
-
-    // number peekInt(uint8_t* ptr) {
-    //     number result = 0;
-    //     result = (ptr[0]<<24)+(ptr[1]<<16)+(ptr[2]<<8)+(ptr[3]);
-    //     return result;
-    // }
-
-    // char* peekStr(uint8_t* ptr, char* dest=NULL, int maxLen=-1) {
-    //     int maxPeek = -1;
-    //     for(int i=0; i < 99999; i++) {
-    //         if ( ptr[i] == 0x00 ) {
-    //             maxPeek = i;
-    //             break;
-    //         }
-    //     }
-
-    //     if ( maxLen < 0 ) {
-    //         maxLen = maxPeek;
-    //     }
-
-    //     int lenToKeep = min( maxLen, maxPeek );
-
-    //     if ( dest == NULL ) {
-    //         dest = (char*)malloc( lenToKeep+1 );
-    //     }
-
-    //     memset(dest, 0x00, lenToKeep+1);
-
-    //     memcpy(dest, ptr, lenToKeep);
-    //     return dest;
-    // }
 
 // ============= Get Variables =========================
 
@@ -396,6 +351,88 @@ int dimArrayVar(char* name, int length) {
      return ASSIGN_NOERROR;
  }
 
+ // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+ // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+#define NOT_YET 1
+
+#ifdef NOT_YET
+ // returns assignResultCode
+ int reassignString(int varIdx, char* value, heapAddr &finalAddr) {
+     int segLen = strlen( value );
+
+     heapAddr currentAddr = getVar( varIdx );
+     heapAddr nextSibbling = getVar( findNextVar( varIdx ) );
+
+     if ( nextSibbling == HEAP_NOT_FOUND ) {
+         // there is NO var nextSibbling
+         if ( currentAddr + segLen >= MAIN_HEAP_SIZE ) {
+             // too long for remaining Heap
+             // TODO : could try to defrag if needed ....
+             finalAddr = HEAP_NOT_FOUND;
+             return ASSIGN_ERROR_OVERFLOW;
+         } else {
+             // can append to heap
+             storeStr( &heap[ currentAddr ], value, segLen, true );
+             finalAddr = currentAddr;
+             heapCursor += segLen+1;
+         }
+     } else {
+         // there is a var nextSibbling
+         if ( currentAddr + segLen >= nextSibbling ) {
+             // too long 'till next value, have to relocate
+
+             // blanking no-more-used area
+             memset( &heap[ currentAddr ], 0x00, nextSibbling-currentAddr );
+
+             // place @ end of heap
+             currentAddr = getHeapUse();
+
+             if ( currentAddr + segLen >= MAIN_HEAP_SIZE ) {
+                // too long for remaining Heap
+                // TODO : could try to defrag if needed ....
+                finalAddr = HEAP_NOT_FOUND;
+                return ASSIGN_ERROR_OVERFLOW;
+             } else {
+                // append to heap
+                storeStr( &heap[ currentAddr ], value, segLen, true );
+                finalAddr = currentAddr;
+                heapCursor += segLen+1;
+             }
+
+         } else {
+             // can append before next value
+             storeStr( &heap[ currentAddr ], value, segLen, true );
+             finalAddr = currentAddr;
+             heapCursor += 0;
+         }
+     }
+
+     return ASSIGN_NOERROR;
+ }
+
+ // returns assignResultCode
+ int reassignString(char* name, int index, char* value) {
+     int curVarIdx = findVar( name, index );
+
+     heapAddr lastAddr = 0;
+
+     if ( curVarIdx < 0 ) {
+         registerVar(name, index, lastAddr);
+     } else {
+         reassignString( curVarIdx, value, lastAddr );
+         int subAddr = curVarIdx * HEAP_REG_ENTRY_SIZE;
+         hregister[ subAddr + HEAP_REG_ENTRY_SIZE_name_ext + 0 ] = (uint8_t)( lastAddr >> 8 );
+         hregister[ subAddr + HEAP_REG_ENTRY_SIZE_name_ext + 1 ] = (uint8_t)( lastAddr % 256 );
+     }
+
+ }
+
+
+#endif
+
+ // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+ // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
  // ====== Debug =================
  char printableChar(uint8_t code) {
