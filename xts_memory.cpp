@@ -14,6 +14,19 @@ void setupMainMemory() {
 heapAddr heapCursor = 0;
 heapAddr hRegisterCursor = 0;
 
+// TO BE DECLARED as STATIC !!!!!!
+uint8_t heap[ MAIN_HEAP_SIZE ]; // 64KB
+
+// if static -> may cause single ref but multiple sates
+uint8_t hregister[ HEAP_REG_SIZE ]; // 2KB
+
+
+uint8_t* getHeap(heapAddr addr) {
+  return &heap[addr];
+}
+
+
+
 void _initHeap() {
     memset( heap, 0x00, MAIN_HEAP_SIZE );
 } // fill w/ 0x00
@@ -188,6 +201,31 @@ int dimArrayVar(char* name, int length) {
         number result = 0;
         result = (ptr[0]<<24)+(ptr[1]<<16)+(ptr[2]<<8)+(ptr[3]);
         return result;
+    }
+
+    char* peekStr(uint8_t* ptr, char* dest=NULL, int maxLen=-1) {
+        int maxPeek = -1;
+        for(int i=0; i < 99999; i++) {
+            if ( ptr[i] == 0x00 ) {
+                maxPeek = i;
+                break;
+            }
+        }
+
+        if ( maxLen < 0 ) {
+            maxLen = maxPeek;
+        }
+
+        int lenToKeep = min( maxLen, maxPeek );
+
+        if ( dest == NULL ) {
+            dest = (char*)malloc( lenToKeep+1 );
+        }
+
+        memset(dest, 0x00, lenToKeep+1);
+
+        memcpy(dest, ptr, lenToKeep);
+        return dest;
     }
 
 // ============= Get Variables =========================

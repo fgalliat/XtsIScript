@@ -12,11 +12,15 @@
  // cause no var can use only 1byte of storage
  #define HEAP_NOT_FOUND (MAIN_HEAP_SIZE - 1)
  
- static uint8_t heap[ MAIN_HEAP_SIZE ]; // 64KB
+ // if static -> may cause single ref but multiple sates
+//  static uint8_t heap[ MAIN_HEAP_SIZE ]; // 64KB
+ uint8_t* getHeap(heapAddr addr=0);
+
  void _initHeap(); // fill w/ 0x00
 
  // in bytes
  heapAddr getHeapUse();
+
 
 
  // Cf arduino
@@ -74,7 +78,9 @@
  #define HEAP_REG_ENTRY_SIZE ( HEAP_REG_ENTRY_SIZE_name_ext + HEAP_REG_ENTRY_SIZE_addr )
  #define HEAP_REG_ENTRY_NB 256
  #define HEAP_REG_SIZE ( HEAP_REG_ENTRY_SIZE * HEAP_REG_ENTRY_NB )
- static uint8_t hregister[ HEAP_REG_SIZE ]; // 2KB
+
+ // if static -> may cause single ref but multiple sates
+ // static uint8_t hregister[ HEAP_REG_SIZE ]; // 2KB
 
  void _initHRegister(); // fill w/ 0x80 (no space used char)
 

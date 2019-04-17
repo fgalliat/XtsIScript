@@ -182,6 +182,9 @@ DBUG( getScratchPad() );
     return rc == ASSIGN_NOERROR;
   }
 
+  // TODO : TMP : not public 
+  extern int storeStr(uint8_t* ptr, char* value, int len=-1, bool storeLastZero=true);
+  extern char* peekStr(uint8_t* ptr, char* dest=NULL, int maxLen=-1);
 
   void TU_heap() {
     bool ok;
@@ -204,6 +207,15 @@ DBUG( getScratchPad() );
     ok = testAssignOneInt("ab", 1, 65000);
     ok = testAssignOneInt("ab", 2, 65000);
     ok = testAssignOneInt("ab", 12, 65000); // should be wrong 'cause that array is only 10 long
+
+    DBUG("TU------------------------");
+    int saddr = getHeapUse();
+    // storeStr( &heap[saddr], (char*)"Coucou les gens" );
+    storeStr( getHeap(saddr), (char*)"Coucou les gens" );
+    DBUG( "(TU) String peek", saddr );
+    // DBUG( peekStr( &heap[saddr] ) );
+    DBUG( peekStr( getHeap(saddr) ) );
+
 
     DBUG( "==== H reg =========================" ); 
     debugHRegister(0, 64);
