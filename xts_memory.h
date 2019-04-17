@@ -3,24 +3,6 @@
 
  #include "xts_typedef.h"
  #include "xts_io.h"
- 
- void setupMainMemory();
-
- #define MAIN_HEAP_SIZE 65536
- 
- typedef uint16_t heapAddr;
- // cause no var can use only 1byte of storage
- #define HEAP_NOT_FOUND (MAIN_HEAP_SIZE - 1)
- 
- // if static -> may cause single ref but multiple sates
-//  static uint8_t heap[ MAIN_HEAP_SIZE ]; // 64KB
- uint8_t* getHeap(heapAddr addr=0);
-
- void _initHeap(); // fill w/ 0x00
-
- // in bytes
- heapAddr getHeapUse();
-
 
 
  // Cf arduino
@@ -37,6 +19,28 @@
  static const int HEAP_ST_DECIMAL_SIZE = sizeof(decimal);
  static const int HEAP_ST_NUMVAL_SIZE = 1+HEAP_ST_NUMBER_SIZE;
  static const int HEAP_ST_DECVAL_SIZE = 1+HEAP_ST_DECIMAL_SIZE;
+
+
+
+ #define MAIN_HEAP_SIZE 65536
+ typedef uint16_t heapAddr;
+ 
+ // cause no var can use only 1byte of storage
+ #define HEAP_NOT_FOUND (MAIN_HEAP_SIZE - 1)
+ 
+ // if static -> may cause single ref but multiple sates
+ // static uint8_t heap[ MAIN_HEAP_SIZE ]; // 64KB
+
+ // if static -> may cause single ref but multiple sates
+ // static uint8_t hregister[ HEAP_REG_SIZE ]; // 2KB
+
+ void setupMainMemory();
+ uint8_t* getHeap(heapAddr addr=0);
+
+ // in bytes
+ heapAddr getHeapUse();
+
+ // ======= Assign Ops ============
 
  #define ASSIGN_NOERROR        0
  #define ASSIGN_ERROR_OVERFLOW 1
@@ -62,14 +66,13 @@
  int dimArrayVar(char* name, int length);
  int getArrayLength(char* name);
 
+ // ======= Fetch Ops ============
+
  number getInt(char* name, int index=0);
  float getFloat(char* name, int index=0);
  char* getString(char* name, int index=0);
 
-
- heapAddr defragHeap();
-
- // ==============================
+ // ====== Heap Register =========
 
  #define HEAP_REG_ENTRY_SIZE_name_only 5
  #define HEAP_REG_ENTRY_SIZE_name_aidx 1
@@ -79,14 +82,13 @@
  #define HEAP_REG_ENTRY_NB 256
  #define HEAP_REG_SIZE ( HEAP_REG_ENTRY_SIZE * HEAP_REG_ENTRY_NB )
 
- // if static -> may cause single ref but multiple sates
- // static uint8_t hregister[ HEAP_REG_SIZE ]; // 2KB
-
- void _initHRegister(); // fill w/ 0x80 (no space used char)
-
  void registerVar(char* name, int index = 0, heapAddr addr=HEAP_NOT_FOUND);
  heapAddr getVar(char* name, int index=0);
+
+ // === GC Routines ==============
+
  bool markForGC(char* name, int index=0); // see later
+ heapAddr defragHeap();
 
  // ==============================
  void debugHRegister(int start=0, int stop=-1);

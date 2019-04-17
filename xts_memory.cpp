@@ -2,6 +2,10 @@
 
 bool mainHeapInited = false;
 
+
+ void _initHeap(); // fill w/ 0x00
+ void _initHRegister(); // fill w/ 0x80 (no space used char)
+
 void setupMainMemory() {
     mainHeapInited = false;
 
@@ -14,7 +18,7 @@ void setupMainMemory() {
 heapAddr heapCursor = 0;
 heapAddr hRegisterCursor = 0;
 
-// TO BE DECLARED as STATIC !!!!!!
+// TO NOT BE DECLARED as STATIC !!!!!!
 uint8_t heap[ MAIN_HEAP_SIZE ]; // 64KB
 
 // if static -> may cause single ref but multiple sates
@@ -375,12 +379,17 @@ int dimArrayVar(char* name, int length) {
 
 
  // ====== Debug =================
+ char printableChar(uint8_t code) {
+     if ( code < 32  ) { return '?'; }
+     if ( code > 127 ) { return '?'; }
+     return (char)code;
+ }
 
  void debugHRegister(int start, int stop) {
      if ( stop < 0 ) { stop = HEAP_REG_SIZE; }
      int pageSize = HEAP_REG_ENTRY_SIZE;
      for(int i=start; i < stop; i++) {
-         printf("0x%02X ", hregister[i]);
+         printf("0x%02X %c ", hregister[i], printableChar(hregister[i]));
          if ( i % pageSize == pageSize-1 ) { printf("\n"); }
      }
      printf("\n");
@@ -389,7 +398,7 @@ int dimArrayVar(char* name, int length) {
  void debugHeap(int start, int stop, int pageSize) {
      if ( stop < 0 ) { stop = MAIN_HEAP_SIZE; }
      for(int i=start; i < stop; i++) {
-         printf("0x%02X ", heap[i]);
+         printf("0x%02X %c ", heap[i], printableChar(heap[i]));
          if ( i % pageSize == pageSize-1 ) { printf("\n"); }
      }
      printf("\n");
