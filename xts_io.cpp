@@ -10,7 +10,12 @@ bool DBUG_LOCKED = false;
 void DBUG(const char* str) {
     if (DBUG_LOCKED) { return; }
     _printf( "%s\n", str );
-} 
+}
+
+void DBUG(const char* str, int num) {
+    if (DBUG_LOCKED) { return; }
+    _printf( "%s => (%d)\n", str, num );
+}
 
 void DBUG(xvalue v) {
     if (DBUG_LOCKED) { return; }

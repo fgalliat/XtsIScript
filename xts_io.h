@@ -7,6 +7,7 @@ extern bool DBUG_LOCKED;
 
 
 void DBUG(const char* str);
+void DBUG(const char* str, int num);
 
 void DBUG(xvalue v);
 void DBUG(xlexem v);
