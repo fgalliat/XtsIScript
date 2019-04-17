@@ -147,9 +147,33 @@ DBUG( getScratchPad() );
   bool testAssignOneInt(char* name, int index, int value) {
     int rc = assignVar(name, index, (number)value);
 
+    int result = getInt(name, index);
+
     char str[128]; memset( str, 0x00, 128 );
-    sprintf(str, "(TU) assign %s[%d]=%d ==> %d \t\t [%s] \n", name, index, value, getInt(name, index), assignErrorMsg[rc] );
+    sprintf(str, "(TU) assign %s[%d]=%d ==> %d \t\t [%s] \n", name, index, value, result, assignErrorMsg[rc] );
     DBUG( (const char*)str );
+
+    if ( result != value ) {
+      DBUG(" Assert is false");
+      return false;
+    }
+
+    return rc == ASSIGN_NOERROR;
+  }
+
+  bool testAssignOneFloat(char* name, int index, float value) {
+    int rc = assignVar(name, index, (decimal)value);
+
+    float result = getFloat(name, index);
+
+    char str[128]; memset( str, 0x00, 128 );
+    sprintf(str, "(TU) assign %s[%d]=%g ==> %g \t\t [%s] \n", name, index, value, result, assignErrorMsg[rc] );
+    DBUG( (const char*)str );
+
+    if ( result != value ) {
+      DBUG(" Assert is false");
+      return false;
+    }
 
     return rc == ASSIGN_NOERROR;
   }
@@ -160,6 +184,8 @@ DBUG( getScratchPad() );
     
     ok = testAssignOneInt("ab", 0, 3);
     ok = testAssignOneInt("ab", 0, 257);
+
+    ok = testAssignOneFloat("bb", 0, 3.14);
   }
 
 

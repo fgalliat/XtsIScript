@@ -160,6 +160,26 @@ int getArrayLength(char* name) {
     return result;
  }
 
+ decimal getFloat(char* name, int index) {
+     heapAddr varAddr = getVar(name, index);
+     if ( varAddr == HEAP_NOT_FOUND ) { return -1.0F; }
+
+     decimal result;
+
+     if ( heap[ varAddr ] == TYPE_FLOAT ) {
+        memcpy( &result, &heap[ varAddr+1 ], HEAP_ST_DECIMAL_SIZE );
+     } else if ( heap[ varAddr ] == TYPE_NUM ) {
+         // TODO
+         DBUG("(!!) getFloat on Int :TODO: (0xjdsh)");
+         return -1.0F;
+     } else {
+         DBUG("(!!) Wrong type (0xdflh)");
+         return -1.0F;
+     }
+
+    return result;
+ }
+
  // ============= Set Variables =========================
 
  int assignVar(char* name, int index, number value) {
@@ -207,6 +227,51 @@ int getArrayLength(char* name) {
      heap[ varAddr +2 ] = (value >> 16) % 256;
      heap[ varAddr +3 ] = (value >> 8) % 256;
      heap[ varAddr +4 ] = value % 256; // 256 : not 0xFF (255)
+
+     return ASSIGN_NOERROR;
+ }
+
+ int assignVar(char* name, int index, decimal value) {
+     int aryIdx = index;
+     if ( aryIdx < 0 || aryIdx > getArrayLength(name) ) {
+         // MSG : invalid array index
+         return ASSIGN_ERROR_INDEX;
+     }
+
+     heapAddr varAddr = getVar(name, aryIdx);
+     DBUG(" d. Var addr : ", varAddr);
+     bool existing = varAddr != HEAP_NOT_FOUND;
+     bool validAddr = varAddr != MAIN_HEAP_SIZE;
+
+     if ( !validAddr ) {
+         // MSG: invalid address
+         return ASSIGN_ERROR_ADDR;
+     }
+
+     if ( !existing ) {
+         // needed too for overflow detection
+         varAddr = getHeapUse();
+         DBUG(" d. will use end of heap");
+     }
+
+     if ( varAddr + HEAP_ST_DECVAL_SIZE >= MAIN_HEAP_SIZE ) {
+         // MSG: overflow address
+         return ASSIGN_ERROR_OVERFLOW;
+     }
+
+     if ( existing ) {
+         DBUG(" d. var was found");
+         if ( heap[ varAddr ] != TYPE_NUM && heap[ varAddr ] != TYPE_FLOAT ) {
+             // MSG: invalid var type
+             return ASSIGN_ERROR_TYPE;
+         }
+     } else {
+         DBUG(" d. register the var in hreg");
+         registerVar(name, aryIdx, varAddr);
+     } 
+
+     heap[ varAddr +0 ] = TYPE_FLOAT;
+     memcpy( &heap[ varAddr + 1 ], &value, HEAP_ST_NUMBER_SIZE );
 
      return ASSIGN_NOERROR;
  }
