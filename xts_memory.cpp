@@ -1,4 +1,5 @@
 #include "xts_memory.h"
+#include "xts_memutils.h"
 
 bool mainHeapInited = false;
 
@@ -57,15 +58,8 @@ int getHRegisterUse() {
     return HEAP_REG_ENTRY_NB;
 }
 
-
-// -- heap reg ----
-
-bool binEq(char* s0, char* s1, int len) {
-    for(int z=0; z < len; z++) {
-        if ( s0[z] != s1[z] ) { return false; }
-    }
-    return true;
-}
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 // Arrays index are 254 max (so 255 elems)
 void composeVarName(char* name, int index, char* dest) {
@@ -74,8 +68,7 @@ void composeVarName(char* name, int index, char* dest) {
    dest[HEAP_REG_ENTRY_SIZE_name_ext - HEAP_REG_ENTRY_SIZE_name_aidx] = index % 256;
 }
 
-
-
+// returns an index
 int findVar(char* name, int index=0) {
     for(int i=0; i < HEAP_REG_ENTRY_NB; i++) {
         int addr = i*HEAP_REG_ENTRY_SIZE;
@@ -103,14 +96,37 @@ int findVar(char* name, int index=0) {
     return -1;
 }
 
+// forward symbol
+heapAddr getVar(int entryIndex);
 
-
+// returns an addr
 heapAddr getVar(char* name, int index) {
     int idx = findVar(name, index);
     if ( idx < 0 ) {
         DBUG(" b. Not found variable in register");
         return HEAP_NOT_FOUND;
     }
+    return getVar( idx );
+}
+
+// returns an addr of addr just after >> name[index] <<
+heapAddr getNextVar(char* name, int index) {
+    int idx = findVar(name, index);
+    if ( idx < 0 ) {
+        DBUG(" b. Not found variable in register");
+        return HEAP_NOT_FOUND;
+    }
+    if ( idx >= HEAP_REG_ENTRY_NB ) {
+        DBUG(" b. No more variable in register");
+        return HEAP_NOT_FOUND;
+    }
+    return getVar( idx+1 );
+}
+
+
+// returns an addr
+heapAddr getVar(int entryIndex) {
+    int idx = entryIndex;
 
     int addr = idx*HEAP_REG_ENTRY_SIZE;
     DBUG(" b. Found variable in register", addr);
@@ -120,6 +136,9 @@ heapAddr getVar(char* name, int index) {
     heapAddr found = ( add1 << 8 ) + add0;
     return found;
 }
+
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 void registerVar(char* name, int index, heapAddr vaddr) {
   int idx = findVar(name, index);
@@ -173,64 +192,64 @@ int dimArrayVar(char* name, int length) {
 
 // ============= Serialize Values=======================
 
-    int storeInt(uint8_t* ptr, number value) {
-      ptr[0] = (value >> 24) % 256;
-      ptr[1] = (value >> 16) % 256;
-      ptr[2] = (value >> 8) % 256;
-      ptr[3] = value % 256; // 256 : not 0xFF (255)   
-      return HEAP_ST_NUMBER_SIZE;
-    }
+    // int storeInt(uint8_t* ptr, number value) {
+    //   ptr[0] = (value >> 24) % 256;
+    //   ptr[1] = (value >> 16) % 256;
+    //   ptr[2] = (value >> 8) % 256;
+    //   ptr[3] = value % 256; // 256 : not 0xFF (255)   
+    //   return HEAP_ST_NUMBER_SIZE;
+    // }
 
-    int storeDec(uint8_t* ptr, decimal value) {
-        memcpy( ptr, &value, HEAP_ST_DECIMAL_SIZE );
-        return HEAP_ST_DECIMAL_SIZE;
-    }
+    // int storeDec(uint8_t* ptr, decimal value) {
+    //     memcpy( ptr, &value, HEAP_ST_DECIMAL_SIZE );
+    //     return HEAP_ST_DECIMAL_SIZE;
+    // }
 
-    int storeStr(uint8_t* ptr, char* value, int len=-1, bool storeLastZero=true) {
-        if ( len < 0 ) { len = strlen(value); }
-        memcpy( ptr, value, len );
-        if (storeLastZero) { ptr[ len ] = 0x00; } 
-        return len;
-    }
+    // int storeStr(uint8_t* ptr, char* value, int len=-1, bool storeLastZero=true) {
+    //     if ( len < 0 ) { len = strlen(value); }
+    //     memcpy( ptr, value, len );
+    //     if (storeLastZero) { ptr[ len ] = 0x00; } 
+    //     return len;
+    // }
 
-    // ========================
+    // // ========================
 
-    decimal peekFloat(uint8_t* ptr) {
-        decimal result;
-        memcpy( &result, ptr, HEAP_ST_DECIMAL_SIZE );
-        return result;
-    }
+    // decimal peekFloat(uint8_t* ptr) {
+    //     decimal result;
+    //     memcpy( &result, ptr, HEAP_ST_DECIMAL_SIZE );
+    //     return result;
+    // }
 
-    number peekInt(uint8_t* ptr) {
-        number result = 0;
-        result = (ptr[0]<<24)+(ptr[1]<<16)+(ptr[2]<<8)+(ptr[3]);
-        return result;
-    }
+    // number peekInt(uint8_t* ptr) {
+    //     number result = 0;
+    //     result = (ptr[0]<<24)+(ptr[1]<<16)+(ptr[2]<<8)+(ptr[3]);
+    //     return result;
+    // }
 
-    char* peekStr(uint8_t* ptr, char* dest=NULL, int maxLen=-1) {
-        int maxPeek = -1;
-        for(int i=0; i < 99999; i++) {
-            if ( ptr[i] == 0x00 ) {
-                maxPeek = i;
-                break;
-            }
-        }
+    // char* peekStr(uint8_t* ptr, char* dest=NULL, int maxLen=-1) {
+    //     int maxPeek = -1;
+    //     for(int i=0; i < 99999; i++) {
+    //         if ( ptr[i] == 0x00 ) {
+    //             maxPeek = i;
+    //             break;
+    //         }
+    //     }
 
-        if ( maxLen < 0 ) {
-            maxLen = maxPeek;
-        }
+    //     if ( maxLen < 0 ) {
+    //         maxLen = maxPeek;
+    //     }
 
-        int lenToKeep = min( maxLen, maxPeek );
+    //     int lenToKeep = min( maxLen, maxPeek );
 
-        if ( dest == NULL ) {
-            dest = (char*)malloc( lenToKeep+1 );
-        }
+    //     if ( dest == NULL ) {
+    //         dest = (char*)malloc( lenToKeep+1 );
+    //     }
 
-        memset(dest, 0x00, lenToKeep+1);
+    //     memset(dest, 0x00, lenToKeep+1);
 
-        memcpy(dest, ptr, lenToKeep);
-        return dest;
-    }
+    //     memcpy(dest, ptr, lenToKeep);
+    //     return dest;
+    // }
 
 // ============= Get Variables =========================
 

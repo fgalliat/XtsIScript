@@ -52,6 +52,26 @@ XtsIScript
     ac$ = "Coucou les gens 2"; |   00000000000000000000000X12Coucou les gens0 | bigger than previous size -> (0padd + reallocate)
     
     later : may find a way to preallocate String length
+            could use a 'break-padding-char'
+            or store String length somewhere
+              - @ this time : a String can virtually be 64KB long (+0)
+              - if store length -> we have to delimit max String precision
+                - need to keep some memory space for that length storage
+                - each time even if not needed for all values
+                - stored in a separated space
+              - BOTH cases consumes more RAM than now ....
+
+      - if there's no value after : 
+        - slow to run 'till end of Heap
+        - find if there is a value in the HeapRegister after ? (faster)
+          - could code a findVar(name, idx) : 
+            - findNextVar(name, idx)
+            - findPrevVar(name, idx)
+
+      - if there's a value after
+        - it CAN'T start by a zero (Cf typed value) so last zero is the String maxLen
+
+            
 
 
 

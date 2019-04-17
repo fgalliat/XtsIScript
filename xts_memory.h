@@ -4,19 +4,9 @@
  #include "xts_typedef.h"
  #include "xts_io.h"
 
-
- // Cf arduino
- #ifdef ARDUINO_BOARD
- // 32b signed integer
- typedef long int number;
- #else
- // 32b signed integer
- typedef int number;
- #endif 
- typedef float decimal;
-
- static const int HEAP_ST_NUMBER_SIZE = sizeof(number);
- static const int HEAP_ST_DECIMAL_SIZE = sizeof(decimal);
+ #include "xts_memtypes.h"
+ static const int HEAP_ST_NUMBER_SIZE = ST_NUMBER_SIZE;
+ static const int HEAP_ST_DECIMAL_SIZE = ST_DECIMAL_SIZE;
  static const int HEAP_ST_NUMVAL_SIZE = 1+HEAP_ST_NUMBER_SIZE;
  static const int HEAP_ST_DECVAL_SIZE = 1+HEAP_ST_DECIMAL_SIZE;
 
