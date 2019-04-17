@@ -23,10 +23,22 @@ void _initHRegister() {
     memset(hregister, 0x80, HEAP_REG_SIZE);
 }
 
+// in bytes
 heapAddr getHeapUse() {
     return heapCursor;
 }
 
+// return nb of used entries
+int getHRegisterUse() {
+    for(int i=0; i < HEAP_REG_ENTRY_NB; i++) {
+        int addr = i*HEAP_REG_ENTRY_SIZE;
+        // reached end of used heap register
+        if ( hregister[addr] == 0x80 ) {
+            return i;
+        }
+    }
+    return HEAP_REG_ENTRY_NB-1;
+}
 
 
 // -- heap reg ----
@@ -53,6 +65,7 @@ int findVar(char* name, int index=0) {
         int addr = i*HEAP_REG_ENTRY_SIZE;
         // reached end of used heap register
         if ( hregister[addr] == 0x80 ) {
+            DBUG(" a. reached end of heap-reg (0x01)");
             return -1;
         }
 
@@ -63,32 +76,26 @@ int findVar(char* name, int index=0) {
         composeVarName(name, index, reqName);
 
         if ( binEq(entryName, reqName, HEAP_REG_ENTRY_SIZE_name_ext) ) {
+            DBUG(" a. found in heap-reg (0x01)", i);
             return i;
         }
 
     }
+    DBUG(" a. reached end of heap-reg (0x02)");
     return -1;
 }
 
-// return nb of used entries
-int getHRegisterUse() {
-    for(int i=0; i < HEAP_REG_ENTRY_NB; i++) {
-        int addr = i*HEAP_REG_ENTRY_SIZE;
-        // reached end of used heap register
-        if ( hregister[addr] == 0x80 ) {
-            return i;
-        }
-    }
-    return HEAP_REG_ENTRY_NB-1;
-}
 
-heapAddr getVar(char* name) {
-    int idx = findVar(name);
+
+heapAddr getVar(char* name, int index) {
+    int idx = findVar(name, index);
     if ( idx < 0 ) {
+        DBUG(" b. Not found variable in register");
         return HEAP_NOT_FOUND;
     }
 
     int addr = idx*HEAP_REG_ENTRY_SIZE;
+    DBUG(" b. Found variable in register", addr);
     uint8_t add1 = hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +0 ];
     uint8_t add0 = hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +1 ];
 
@@ -123,5 +130,72 @@ void registerVar(char* name, int index, heapAddr vaddr) {
   }
 }
 
+// ============= Get Variables =========================
+
+int getArrayLength(char* name) {
+    // TMP : TODO : better
+    return 255;
+}
 
 
+ number getInt(char* name, int index) {
+     heapAddr varAddr = getVar(name, index);
+     if ( varAddr == HEAP_NOT_FOUND ) { return -1; }
+
+     char tmp[ HEAP_ST_NUMBER_SIZE ];
+     memcpy( tmp, &heap[ varAddr+1 ], HEAP_ST_NUMBER_SIZE );
+
+     int result = (tmp[0]<<24)+(tmp[1]<<16)+(tmp[2]<<8)+(tmp[3]);
+    return result;
+ }
+
+ // ============= Set Variables =========================
+
+ int assignVar(char* name, int index, number value) {
+     int aryIdx = index;
+     if ( aryIdx < 0 || aryIdx > getArrayLength(name) ) {
+         // MSG : invalid array index
+         return ASSIGN_ERROR_INDEX;
+     }
+
+     heapAddr varAddr = getVar(name, aryIdx);
+     DBUG("Var addr : ", varAddr);
+     bool existing = varAddr != HEAP_NOT_FOUND;
+     bool validAddr = varAddr != MAIN_HEAP_SIZE;
+
+     if ( !validAddr ) {
+         // MSG: invalid address
+         return ASSIGN_ERROR_ADDR;
+     }
+
+     if ( !existing ) {
+         // needed too for overflow detection
+         varAddr = getHeapUse();
+         DBUG(" c. will use end of heap");
+     }
+
+     if ( varAddr + HEAP_ST_NUMVAL_SIZE >= MAIN_HEAP_SIZE ) {
+         // MSG: overflow address
+         return ASSIGN_ERROR_OVERFLOW;
+     }
+
+     if ( existing ) {
+         DBUG(" c. var was found");
+         if ( heap[ varAddr ] != TYPE_NUM && heap[ varAddr ] != TYPE_FLOAT ) {
+             // MSG: invalid var type
+             return ASSIGN_ERROR_TYPE;
+         }
+     } else {
+         DBUG(" c. register the var in hreg");
+         registerVar(name, aryIdx, varAddr);
+     } 
+
+     heap[ varAddr +0 ] = TYPE_NUM;
+     // memcpy( &heap[ varAddr + 1 ], &value, HEAP_ST_NUMBER_SIZE );
+     heap[ varAddr +1 ] = (value >> 24) % 0xFF;
+     heap[ varAddr +2 ] = (value >> 16) % 0xFF;
+     heap[ varAddr +3 ] = (value >> 8) % 0xFF;
+     heap[ varAddr +4 ] = value % 0xFF;
+
+     return ASSIGN_NOERROR;
+ }
