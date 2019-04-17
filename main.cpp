@@ -191,15 +191,22 @@ DBUG( getScratchPad() );
 
     ok = testAssignOneFloat("bb", 0, 3.14);
 
-    ok = testAssignOneFloat("ab", 0, 3.14);
+    ok = testAssignOneFloat("ab", 0, 3.14); // should be wrong 'cause 3.14 (float) => 3 (int)
 
     dimArrayVar("ab$", 10);
     DBUG( "(TU) String array length", getArrayLength("ab$") );
 
+    dimArrayVar("ab", 10);
+    DBUG( "(TU) Int array length", getArrayLength("ab") );
+
+    ok = testAssignOneInt("ab", 1, 65000);
+    ok = testAssignOneInt("ab", 2, 65000);
+    ok = testAssignOneInt("ab", 12, 65000);
+
     DBUG( "==== H reg =========================" ); 
     debugHRegister(0, 64);
     DBUG( "==== Heap ==========================" ); 
-    debugHeap(0, 64);
+    debugHeap(0, 64, 5);
   }
 
 

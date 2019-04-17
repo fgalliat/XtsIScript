@@ -105,7 +105,7 @@ heapAddr getVar(char* name, int index) {
 }
 
 void registerVar(char* name, int index, heapAddr vaddr) {
-  int idx = findVar(name);
+  int idx = findVar(name, index);
   bool found = idx >= 0;
 
   if ( vaddr == HEAP_NOT_FOUND ) {
@@ -138,8 +138,6 @@ void registerVar(char* name, int index, heapAddr vaddr) {
 // max is 254 (255 elems)
 // array[255] is the array descriptor & length variable
 int getArrayLength(char* name) {
-    // TMP : TODO : better
-
     int len = getInt( name, ARRAY_LENGTH_POSITION );
     if ( len < 0 ) {
         len = ARRAY_MAX_LENGTH;
@@ -165,7 +163,7 @@ int dimArrayVar(char* name, int length) {
      int result;
 
      if ( heap[ varAddr ] == TYPE_NUM ) {
-        char tmp[ HEAP_ST_NUMBER_SIZE ];
+        uint8_t tmp[ HEAP_ST_NUMBER_SIZE ];
         memcpy( tmp, &heap[ varAddr+1 ], HEAP_ST_NUMBER_SIZE );
         result = (tmp[0]<<24)+(tmp[1]<<16)+(tmp[2]<<8)+(tmp[3]);
      } else if ( heap[ varAddr ] == TYPE_FLOAT ) {

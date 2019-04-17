@@ -41,6 +41,7 @@ XtsIScript
             need a specific pointer so array limit of 256 elems goes to 255 ( [0..254] )
             then [255] becomes the array itself
 
+    /!\\ ok = testAssignOneInt("ab", 2, 65000); => returns -792
 
 
 

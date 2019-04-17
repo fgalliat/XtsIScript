@@ -52,7 +52,7 @@
  int assignVar(char* name, int index, char* value);
 
  static int assignVar(char* name, number value) { return assignVar( name, 0, value ); }
-//  static int assignVar(char* name, decimal value) { return assignVar( name, 0, value ); }
+ static int assignVar(char* name, decimal value) { return assignVar( name, 0, value ); }
 //  static int assignVar(char* name, char* value) { return assignVar( name, 0, value ); }
 
  int dimArrayVar(char* name, int length);
