@@ -154,6 +154,42 @@ int dimArrayVar(char* name, int length) {
     return assignVar(name, ARRAY_LENGTH_POSITION, length);
 }
 
+// ============= Serialize Values=======================
+
+    int storeInt(uint8_t* ptr, number value) {
+      ptr[0] = (value >> 24) % 256;
+      ptr[1] = (value >> 16) % 256;
+      ptr[2] = (value >> 8) % 256;
+      ptr[3] = value % 256; // 256 : not 0xFF (255)   
+      return HEAP_ST_NUMBER_SIZE;
+    }
+
+    int storeDec(uint8_t* ptr, decimal value) {
+        memcpy( ptr, &value, HEAP_ST_DECIMAL_SIZE );
+        return HEAP_ST_DECIMAL_SIZE;
+    }
+
+    int storeStr(uint8_t* ptr, char* value, int len=-1, bool storeLastZero=true) {
+        if ( len < 0 ) { len = strlen(value); }
+        memcpy( ptr, value, len );
+        if (storeLastZero) { ptr[ len ] = 0x00; } 
+        return len;
+    }
+
+    // ========================
+
+    decimal peekFloat(uint8_t* ptr) {
+        decimal result;
+        memcpy( &result, ptr, HEAP_ST_DECIMAL_SIZE );
+        return result;
+    }
+
+    number peekInt(uint8_t* ptr) {
+        number result = 0;
+        result = (ptr[0]<<24)+(ptr[1]<<16)+(ptr[2]<<8)+(ptr[3]);
+        return result;
+    }
+
 // ============= Get Variables =========================
 
  number getInt(char* name, int index) {
@@ -163,11 +199,8 @@ int dimArrayVar(char* name, int length) {
      int result;
 
      if ( heap[ varAddr ] == TYPE_NUM ) {
-        uint8_t tmp[ HEAP_ST_NUMBER_SIZE ];
-        memcpy( tmp, &heap[ varAddr+1 ], HEAP_ST_NUMBER_SIZE );
-        result = (tmp[0]<<24)+(tmp[1]<<16)+(tmp[2]<<8)+(tmp[3]);
+        result = peekInt( &heap[ varAddr+1 ] );
      } else if ( heap[ varAddr ] == TYPE_FLOAT ) {
-         // DBUG("(!!) getInt on Float :TODO: (0xdjhgfd)");
          return (number)getFloat(name, index);
      } else {
          DBUG("(!!) Wrong type (0xtfgghf)");
@@ -184,9 +217,8 @@ int dimArrayVar(char* name, int length) {
      decimal result;
 
      if ( heap[ varAddr ] == TYPE_FLOAT ) {
-        memcpy( &result, &heap[ varAddr+1 ], HEAP_ST_DECIMAL_SIZE );
+        result = peekFloat( &heap[ varAddr+1 ] );
      } else if ( heap[ varAddr ] == TYPE_NUM ) {
-        //  DBUG("(!!) getFloat on Int :TODO: (0xjdsh)");
          return (decimal)getInt( name, index );
      } else {
          DBUG("(!!) Wrong type (0xdflh)");
@@ -197,18 +229,6 @@ int dimArrayVar(char* name, int length) {
  }
 
  // ============= Set Variables =========================
-
-    void storeInt(uint8_t* ptr, number value) {
-      ptr[0] = (value >> 24) % 256;
-      ptr[1] = (value >> 16) % 256;
-      ptr[2] = (value >> 8) % 256;
-      ptr[3] = value % 256; // 256 : not 0xFF (255)   
-    }
-
-    void storeDec(uint8_t* ptr, decimal value) {
-        memcpy( ptr, &value, HEAP_ST_DECIMAL_SIZE );
-    }
-
 
 
  int assignVar(char* name, int index, number value) {

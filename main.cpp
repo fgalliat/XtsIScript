@@ -193,9 +193,11 @@ DBUG( getScratchPad() );
 
     ok = testAssignOneFloat("ab", 0, 3.14); // should be wrong 'cause 3.14 (float) => 3 (int)
 
+    DBUG("TU------------------------");
     dimArrayVar("ab$", 10);
     DBUG( "(TU) String array length", getArrayLength("ab$") );
 
+    DBUG("TU------------------------");
     dimArrayVar("ab", 10);
     DBUG( "(TU) Int array length", getArrayLength("ab") );
 
