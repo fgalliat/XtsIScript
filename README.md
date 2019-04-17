@@ -32,6 +32,13 @@ XtsIScript
         5 long 0 padding / 1byte for array cell index / 8 bytes per entry
     }
 
+    VAR         |  REGISTER   | HEAP
+    ------------+-------------+----------+
+    ab$[1] =>   | ab$001YX    | 1xxxx    | ==> YX heap addr // xxxx 32b integer
+    ab$    =>   | ab$00?YX    | 3000x    | ==> ? arrayVar descriptor // x uint8_t array length ==> ????
+    ac$    =>   | ac$000YX    | 2Coucou les gens0
+
+
 
 
 
