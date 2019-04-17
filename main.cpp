@@ -145,8 +145,14 @@ DBUG( getScratchPad() );
   // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
   void TU_heap() {
-    int rc = assignVar("ab", 3);
+    int rc;
+    
+    rc = assignVar("ab", 3);
     DBUG("assign ab=3", getInt("ab") );
+    DBUG( assignErrorMsg[rc] );
+
+    rc = assignVar("ab", 257);
+    DBUG("assign ab=257", getInt("ab") );
     DBUG( assignErrorMsg[rc] );
   }
 

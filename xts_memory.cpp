@@ -143,9 +143,20 @@ int getArrayLength(char* name) {
      if ( varAddr == HEAP_NOT_FOUND ) { return -1; }
 
      char tmp[ HEAP_ST_NUMBER_SIZE ];
-     memcpy( tmp, &heap[ varAddr+1 ], HEAP_ST_NUMBER_SIZE );
+     int result;
 
-     int result = (tmp[0]<<24)+(tmp[1]<<16)+(tmp[2]<<8)+(tmp[3]);
+     if ( heap[ varAddr ] == TYPE_NUM ) {
+        memcpy( tmp, &heap[ varAddr+1 ], HEAP_ST_NUMBER_SIZE );
+        result = (tmp[0]<<24)+(tmp[1]<<16)+(tmp[2]<<8)+(tmp[3]);
+     } else if ( heap[ varAddr ] == TYPE_FLOAT ) {
+         // TODO
+         DBUG("(!!) getInt on Float :TODO: (0xdjhgfd)");
+         return -1;
+     } else {
+         DBUG("(!!) Wrong type (0xtfgghf)");
+         return -1;
+     }
+
     return result;
  }
 
@@ -159,7 +170,7 @@ int getArrayLength(char* name) {
      }
 
      heapAddr varAddr = getVar(name, aryIdx);
-     DBUG("Var addr : ", varAddr);
+     DBUG(" c. Var addr : ", varAddr);
      bool existing = varAddr != HEAP_NOT_FOUND;
      bool validAddr = varAddr != MAIN_HEAP_SIZE;
 
@@ -192,10 +203,10 @@ int getArrayLength(char* name) {
 
      heap[ varAddr +0 ] = TYPE_NUM;
      // memcpy( &heap[ varAddr + 1 ], &value, HEAP_ST_NUMBER_SIZE );
-     heap[ varAddr +1 ] = (value >> 24) % 0xFF;
-     heap[ varAddr +2 ] = (value >> 16) % 0xFF;
-     heap[ varAddr +3 ] = (value >> 8) % 0xFF;
-     heap[ varAddr +4 ] = value % 0xFF;
+     heap[ varAddr +1 ] = (value >> 24) % 256;
+     heap[ varAddr +2 ] = (value >> 16) % 256;
+     heap[ varAddr +3 ] = (value >> 8) % 256;
+     heap[ varAddr +4 ] = value % 256; // 256 : not 0xFF (255)
 
      return ASSIGN_NOERROR;
  }
