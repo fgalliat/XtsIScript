@@ -201,7 +201,7 @@ DBUG( getScratchPad() );
 
     ok = testAssignOneInt("ab", 1, 65000);
     ok = testAssignOneInt("ab", 2, 65000);
-    ok = testAssignOneInt("ab", 12, 65000);
+    ok = testAssignOneInt("ab", 12, 65000); // should be wrong 'cause that array is only 10 long
 
     DBUG( "==== H reg =========================" ); 
     debugHRegister(0, 64);

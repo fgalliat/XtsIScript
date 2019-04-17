@@ -43,5 +43,20 @@ XtsIScript
 
     /!\\ ok = testAssignOneInt("ab", 2, 65000); => returns -792
 
+    Memory fragmentation : 
+    ac$ = "Coucou";            |   Coucou0                                    | initial Str
+    ac$ = "Couc";              |   Couc000                                    | truncate Str (padd)
+    ac$ = "Coucou";            |   0000000Coucou0                             | more than previous size (0padd + reallocate)
+    ac$ = "Coucou les gens";   |   0000000Coucou les gens0                    | as is last value in heap -> grows
+    new = 12                   |   0000000Coucou les gens0X12                 | new value in heap -> add it
+    ac$ = "Coucou les gens 2"; |   00000000000000000000000X12Coucou les gens0 | bigger than previous size -> (0padd + reallocate)
+    
+    later : may find a way to preallocate String length
+
+
+
+
+
+
 
 
