@@ -50,7 +50,7 @@ bool binEq(char* s0, char* s1, int len) {
     return true;
 }
 
-// Arrays index are 255 max
+// Arrays index are 254 max (so 255 elems)
 void composeVarName(char* name, int index, char* dest) {
    memset(dest, 0x00, HEAP_REG_ENTRY_SIZE_name_ext);
    strcpy(dest, name);
@@ -130,13 +130,33 @@ void registerVar(char* name, int index, heapAddr vaddr) {
   hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +1 ] = vaddr % 256;
 }
 
-// ============= Get Variables =========================
+// ============= Array Variables =======================
 
+#define ARRAY_MAX_LENGTH 255
+#define ARRAY_LENGTH_POSITION 255
+
+// max is 254 (255 elems)
+// array[255] is the array descriptor & length variable
 int getArrayLength(char* name) {
     // TMP : TODO : better
-    return 255;
+
+    int len = getInt( name, ARRAY_LENGTH_POSITION );
+    if ( len < 0 ) {
+        len = ARRAY_MAX_LENGTH;
+    }
+
+    return len;
 }
 
+int dimArrayVar(char* name, int length) {
+    if ( length < 0 || length >= ARRAY_MAX_LENGTH ) {
+        return ASSIGN_ERROR_OVERFLOW;
+    }
+
+    return assignVar(name, ARRAY_LENGTH_POSITION, length);
+}
+
+// ============= Get Variables =========================
 
  number getInt(char* name, int index) {
      heapAddr varAddr = getVar(name, index);

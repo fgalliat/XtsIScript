@@ -56,12 +56,12 @@
 //  static int assignVar(char* name, char* value) { return assignVar( name, 0, value ); }
 
  int dimArrayVar(char* name, int length);
+ int getArrayLength(char* name);
 
  number getInt(char* name, int index=0);
  float getFloat(char* name, int index=0);
  char* getString(char* name, int index=0);
 
- int getArrayLength(char* name);
 
  heapAddr defragHeap();
 

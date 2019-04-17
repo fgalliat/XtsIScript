@@ -34,10 +34,12 @@ XtsIScript
 
     VAR         |  REGISTER   | HEAP
     ------------+-------------+----------+
-    ab$[1] =>   | ab$001YX    | 1xxxx    | ==> YX heap addr // xxxx 32b integer
-    ab$    =>   | ab$00?YX    | 3000x    | ==> ? arrayVar descriptor // x uint8_t array length ==> ????
     ac$    =>   | ac$000YX    | 2Coucou les gens0
-
+    ab$[1] =>   | ab$001YX    | 1xxxx    | ==> YX heap addr // xxxx 32b integer
+    ab$    =>   | ab$00?YX    | 3000x    | ==> ?(0xFF) arrayVar descriptor // x uint8_t array length ==> ????
+     \__ Cf need to pass array descriptor as fct arg. : 
+            need a specific pointer so array limit of 256 elems goes to 255 ( [0..254] )
+            then [255] becomes the array itself
 
 
 

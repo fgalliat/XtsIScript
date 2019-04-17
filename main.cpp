@@ -193,6 +193,9 @@ DBUG( getScratchPad() );
 
     ok = testAssignOneFloat("ab", 0, 3.14);
 
+    dimArrayVar("ab$", 10);
+    DBUG( "(TU) String array length", getArrayLength("ab$") );
+
     DBUG( "==== H reg =========================" ); 
     debugHRegister(0, 64);
     DBUG( "==== Heap ==========================" ); 
