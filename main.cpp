@@ -144,16 +144,22 @@ DBUG( getScratchPad() );
 
   // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-  void TU_heap() {
-    int rc;
-    
-    rc = assignVar("ab", 3);
-    DBUG("assign ab=3", getInt("ab") );
-    DBUG( assignErrorMsg[rc] );
+  bool testAssignOneInt(char* name, int index, int value) {
+    int rc = assignVar(name, index, (number)value);
 
-    rc = assignVar("ab", 257);
-    DBUG("assign ab=257", getInt("ab") );
-    DBUG( assignErrorMsg[rc] );
+    char str[128]; memset( str, 0x00, 128 );
+    sprintf(str, "(TU) assign %s[%d]=%d ==> %d \t\t [%s] \n", name, index, value, getInt(name, index), assignErrorMsg[rc] );
+    DBUG( (const char*)str );
+
+    return rc == ASSIGN_NOERROR;
+  }
+
+
+  void TU_heap() {
+    bool ok;
+    
+    ok = testAssignOneInt("ab", 0, 3);
+    ok = testAssignOneInt("ab", 0, 257);
   }
 
 
