@@ -82,4 +82,8 @@
  heapAddr getVar(char* name, int index=0);
  bool markForGC(char* name, int index=0); // see later
 
+ // ==============================
+ void debugHRegister(int start=0, int stop=-1);
+ void debugHeap(int start=0, int stop=-1, int pageSize=16);
+
 #endif

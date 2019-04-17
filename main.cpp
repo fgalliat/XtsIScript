@@ -145,12 +145,14 @@ DBUG( getScratchPad() );
   // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
   bool testAssignOneInt(char* name, int index, int value) {
+    DBUG("TU------------------------");
     int rc = assignVar(name, index, (number)value);
 
     int result = getInt(name, index);
+    bool ok = rc == ASSIGN_NOERROR && result == value;
 
     char str[128]; memset( str, 0x00, 128 );
-    sprintf(str, "(TU) assign %s[%d]=%d ==> %d \t\t [%s] \n", name, index, value, result, assignErrorMsg[rc] );
+    sprintf(str, "(TU) [%s] assign %s[%d]=%d ==> %d \t\t [%s] ", ok ? "OK" : "KO", name, index, value, result, assignErrorMsg[rc] );
     DBUG( (const char*)str );
 
     if ( result != value ) {
@@ -162,12 +164,14 @@ DBUG( getScratchPad() );
   }
 
   bool testAssignOneFloat(char* name, int index, float value) {
+    DBUG("TU------------------------");
     int rc = assignVar(name, index, (decimal)value);
 
     float result = getFloat(name, index);
+    bool ok = rc == ASSIGN_NOERROR && result == value;
 
     char str[128]; memset( str, 0x00, 128 );
-    sprintf(str, "(TU) assign %s[%d]=%g ==> %g \t\t [%s] \n", name, index, value, result, assignErrorMsg[rc] );
+    sprintf(str, "(TU) [%s] assign %s[%d]=%g ==> %g \t\t [%s] ", ok ? "OK" : "KO", name, index, value, result, assignErrorMsg[rc] );
     DBUG( (const char*)str );
 
     if ( result != value ) {
@@ -186,6 +190,13 @@ DBUG( getScratchPad() );
     ok = testAssignOneInt("ab", 0, 257);
 
     ok = testAssignOneFloat("bb", 0, 3.14);
+
+    ok = testAssignOneFloat("ab", 0, 3.14);
+
+    DBUG( "==== H reg =========================" ); 
+    debugHRegister(0, 64);
+    DBUG( "==== Heap ==========================" ); 
+    debugHeap(0, 64);
   }
 
 

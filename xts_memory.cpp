@@ -37,7 +37,7 @@ int getHRegisterUse() {
             return i;
         }
     }
-    return HEAP_REG_ENTRY_NB-1;
+    return HEAP_REG_ENTRY_NB;
 }
 
 
@@ -58,14 +58,13 @@ void composeVarName(char* name, int index, char* dest) {
 }
 
 
-// BEWARE w/ array cells
 
 int findVar(char* name, int index=0) {
     for(int i=0; i < HEAP_REG_ENTRY_NB; i++) {
         int addr = i*HEAP_REG_ENTRY_SIZE;
         // reached end of used heap register
         if ( hregister[addr] == 0x80 ) {
-            DBUG(" a. reached end of heap-reg (0x01)");
+            // DBUG(" a. reached end of heap-reg (0x01)");
             return -1;
         }
 
@@ -76,8 +75,10 @@ int findVar(char* name, int index=0) {
         composeVarName(name, index, reqName);
 
         if ( binEq(entryName, reqName, HEAP_REG_ENTRY_SIZE_name_ext) ) {
-            DBUG(" a. found in heap-reg (0x01)", i);
+            DBUG(" a. found in heap-reg (0x01) @entry#", i);
             return i;
+        } else {
+            // DBUG( entryName, -61 );
         }
 
     }
@@ -111,23 +112,22 @@ void registerVar(char* name, int index, heapAddr vaddr) {
       vaddr = getHeapUse();
   }
 
+  int addr;
+
   if ( found ) {
     //   reassignVarAddr
-    int addr = idx*HEAP_REG_ENTRY_SIZE;
-    hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +0 ] = vaddr >> 8;
-    hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +1 ] = vaddr % 256;
+    addr = idx*HEAP_REG_ENTRY_SIZE;
   } else {
     //   addEntry @ hregister end
     idx = getHRegisterUse();
     // BEWARE : w/ overflow detection !!!!
-    int addr = idx*HEAP_REG_ENTRY_SIZE;
-    memset(hregister, 0x00, HEAP_REG_ENTRY_SIZE_name_ext);
+    addr = idx*HEAP_REG_ENTRY_SIZE;
     char reqVar[ HEAP_REG_ENTRY_SIZE_name_ext ];
     composeVarName(name, index, reqVar);
     memcpy( &hregister[addr], reqVar, HEAP_REG_ENTRY_SIZE_name_ext );
-    hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +0 ] = vaddr >> 8;
-    hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +1 ] = vaddr % 256;
   }
+  hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +0 ] = vaddr >> 8;
+  hregister[ addr + HEAP_REG_ENTRY_SIZE_name_ext +1 ] = vaddr % 256;
 }
 
 // ============= Get Variables =========================
@@ -142,16 +142,15 @@ int getArrayLength(char* name) {
      heapAddr varAddr = getVar(name, index);
      if ( varAddr == HEAP_NOT_FOUND ) { return -1; }
 
-     char tmp[ HEAP_ST_NUMBER_SIZE ];
      int result;
 
      if ( heap[ varAddr ] == TYPE_NUM ) {
+        char tmp[ HEAP_ST_NUMBER_SIZE ];
         memcpy( tmp, &heap[ varAddr+1 ], HEAP_ST_NUMBER_SIZE );
         result = (tmp[0]<<24)+(tmp[1]<<16)+(tmp[2]<<8)+(tmp[3]);
      } else if ( heap[ varAddr ] == TYPE_FLOAT ) {
-         // TODO
-         DBUG("(!!) getInt on Float :TODO: (0xdjhgfd)");
-         return -1;
+         // DBUG("(!!) getInt on Float :TODO: (0xdjhgfd)");
+         return (number)getFloat(name, index);
      } else {
          DBUG("(!!) Wrong type (0xtfgghf)");
          return -1;
@@ -169,9 +168,8 @@ int getArrayLength(char* name) {
      if ( heap[ varAddr ] == TYPE_FLOAT ) {
         memcpy( &result, &heap[ varAddr+1 ], HEAP_ST_DECIMAL_SIZE );
      } else if ( heap[ varAddr ] == TYPE_NUM ) {
-         // TODO
-         DBUG("(!!) getFloat on Int :TODO: (0xjdsh)");
-         return -1.0F;
+        //  DBUG("(!!) getFloat on Int :TODO: (0xjdsh)");
+         return (decimal)getInt( name, index );
      } else {
          DBUG("(!!) Wrong type (0xdflh)");
          return -1.0F;
@@ -181,6 +179,19 @@ int getArrayLength(char* name) {
  }
 
  // ============= Set Variables =========================
+
+    void storeInt(uint8_t* ptr, number value) {
+      ptr[0] = (value >> 24) % 256;
+      ptr[1] = (value >> 16) % 256;
+      ptr[2] = (value >> 8) % 256;
+      ptr[3] = value % 256; // 256 : not 0xFF (255)   
+    }
+
+    void storeDec(uint8_t* ptr, decimal value) {
+        memcpy( ptr, &value, HEAP_ST_DECIMAL_SIZE );
+    }
+
+
 
  int assignVar(char* name, int index, number value) {
      int aryIdx = index;
@@ -202,7 +213,7 @@ int getArrayLength(char* name) {
      if ( !existing ) {
          // needed too for overflow detection
          varAddr = getHeapUse();
-         DBUG(" c. will use end of heap");
+         DBUG(" c. will use end of heap", varAddr);
      }
 
      if ( varAddr + HEAP_ST_NUMVAL_SIZE >= MAIN_HEAP_SIZE ) {
@@ -216,18 +227,21 @@ int getArrayLength(char* name) {
              // MSG: invalid var type
              return ASSIGN_ERROR_TYPE;
          }
+
+         // Oups : it was a float-typed value
+         if ( heap[ varAddr ] == TYPE_FLOAT ) {
+             return assignVar(name, index, (float)value);
+         }
+
      } else {
          DBUG(" c. register the var in hreg");
          registerVar(name, aryIdx, varAddr);
      } 
 
      heap[ varAddr +0 ] = TYPE_NUM;
-     // memcpy( &heap[ varAddr + 1 ], &value, HEAP_ST_NUMBER_SIZE );
-     heap[ varAddr +1 ] = (value >> 24) % 256;
-     heap[ varAddr +2 ] = (value >> 16) % 256;
-     heap[ varAddr +3 ] = (value >> 8) % 256;
-     heap[ varAddr +4 ] = value % 256; // 256 : not 0xFF (255)
+     storeInt( &heap[ varAddr +1 ], value );
 
+     if (!existing) { heapCursor += HEAP_ST_NUMVAL_SIZE; }
      return ASSIGN_NOERROR;
  }
 
@@ -251,7 +265,7 @@ int getArrayLength(char* name) {
      if ( !existing ) {
          // needed too for overflow detection
          varAddr = getHeapUse();
-         DBUG(" d. will use end of heap");
+         DBUG(" d. will use end of heap", varAddr);
      }
 
      if ( varAddr + HEAP_ST_DECVAL_SIZE >= MAIN_HEAP_SIZE ) {
@@ -265,13 +279,42 @@ int getArrayLength(char* name) {
              // MSG: invalid var type
              return ASSIGN_ERROR_TYPE;
          }
+
+         // Oups : it was an int-typed value
+         if ( heap[ varAddr ] == TYPE_NUM ) {
+             return assignVar(name, index, (number)value);
+         }
+
      } else {
          DBUG(" d. register the var in hreg");
          registerVar(name, aryIdx, varAddr);
      } 
 
      heap[ varAddr +0 ] = TYPE_FLOAT;
-     memcpy( &heap[ varAddr + 1 ], &value, HEAP_ST_NUMBER_SIZE );
+     storeDec( &heap[ varAddr + 1 ], value );
 
+     if (!existing) { heapCursor += HEAP_ST_DECVAL_SIZE; }
      return ASSIGN_NOERROR;
+ }
+
+
+ // ====== Debug =================
+
+ void debugHRegister(int start, int stop) {
+     if ( stop < 0 ) { stop = HEAP_REG_SIZE; }
+     int pageSize = HEAP_REG_ENTRY_SIZE;
+     for(int i=start; i < stop; i++) {
+         printf("0x%02X ", hregister[i]);
+         if ( i % pageSize == pageSize-1 ) { printf("\n"); }
+     }
+     printf("\n");
+ }
+
+ void debugHeap(int start, int stop, int pageSize) {
+     if ( stop < 0 ) { stop = MAIN_HEAP_SIZE; }
+     for(int i=start; i < stop; i++) {
+         printf("0x%02X ", heap[i]);
+         if ( i % pageSize == pageSize-1 ) { printf("\n"); }
+     }
+     printf("\n");
  }
